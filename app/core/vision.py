@@ -1,4 +1,5 @@
 from app.core.intelligence import gemini_client
+from fastapi import HTTPException
 from app.core.search import search_client
 from loguru import logger
 import json
@@ -7,7 +8,9 @@ import asyncio
 import io
 from PIL import Image
 
-async def analyze_food_image_with_search(image_bytes: bytes):
+from app.core.local_intelligence import local_client
+
+async def analyze_food_image_with_search(image_bytes: bytes, deep_search: bool = False):
     """
     Orchestrates the Identify -> Search -> Synthesize workflow.
     Optimized for RAM (resizing) and Speed (Parallel Search).
@@ -109,8 +112,13 @@ async def analyze_food_image_with_search(image_bytes: bytes):
         return json.loads(cleaned_json)
 
     except Exception as e:
-        logger.error(f"Error in vision analysis: {e}")
-        raise e
+        logger.warning(f"Cloud API/Search failed: {e}. Switching to Local Failsafe. Deep Search: {deep_search}")
+        try:
+            # Fallback to Local Intelligence
+            return local_client.analyze_image(image_bytes, deep_search=deep_search)
+        except Exception as local_e:
+            logger.critical(f"Local Failsafe also failed: {local_e}")
+            raise HTTPException(status_code=500, detail="All AI systems failed.")
 
 def _resize_image(image_bytes: bytes, max_size=(1024, 1024)) -> bytes:
     """

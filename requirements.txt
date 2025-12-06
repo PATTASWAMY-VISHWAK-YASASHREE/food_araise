@@ -14,3 +14,5 @@ gradio
 pytest
 pytest-asyncio
 httpx
+llama-cpp-python
+huggingface-hub
