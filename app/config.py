@@ -1,20 +1,25 @@
-import os
 from typing import List
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
+
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
     # API Keys
-    GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
-    SERPAPI_API_KEY: str = os.getenv("SERPAPI_API_KEY", "")
+    GOOGLE_API_KEY: str = ""
+    SERPAPI_API_KEY: str = ""
+    SERPAPI_MIN_INTERVAL: float = 3.6  # seconds between requests
+    SERPAPI_MAX_RETRIES: int = 2
+    SERPAPI_BACKOFF_FACTOR: float = 1.5
 
     # Application Settings
     APP_NAME: str = "Food Agent Server"
     DEBUG: bool = True
-
+    LOG_LEVEL: str = "INFO"
 
     # Local Failsafe Models
     LOCAL_MODEL_LIGHT_REPO: str = "moondream/moondream2-gguf"
@@ -36,7 +41,5 @@ class Settings(BaseSettings):
         "gemini-1.5-flash"
     ]
 
-    class Config:
-        env_file = ".env"
 
 settings = Settings()
